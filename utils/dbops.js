@@ -44,6 +44,8 @@ module.exports = function (dbpath = "./data/data.sqlite") {
   // Check if safeurls are defined, if not set it to the safeurls array
   if (!db.get("safeurls")) db.set("safeurls", safe);
 
+  module.safeurls = db.get("safeurls");
+
   /**
    * Get current cache of phishing domains list
    * @returns {Array<String>} Array of phishing domains
