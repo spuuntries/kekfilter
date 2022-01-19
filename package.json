@@ -1,0 +1,19 @@
+{
+  "name": "kekfilter",
+  "version": "0.4.2-scam",
+  "description": "Scammers b eatin ass >.>",
+  "main": "bot.js",
+  "repository": "https://github.com/spuuntries/kekfilter.git",
+  "author": "spuun <kek@spuun.art>",
+  "license": "AGPL-3.0-only",
+  "private": true,
+  "dependencies": {
+    "axios": "^0.25.0",
+    "discord.js": "^13.6.0",
+    "dotenv": "^14.2.0",
+    "fast-levenshtein": "^3.0.0",
+    "stop-discord-phishing": "^0.0.4",
+    "quick.db": "git+https://github.com/plexidev/quick.db.git",
+    "url-unshort": "^5.0.0"
+  }
+}
