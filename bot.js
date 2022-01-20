@@ -25,14 +25,14 @@ function login() {
 login();
 
 client.on("ready", () => {
+  let safeurls = dbops.db.get("safeurls");
   logger(
     `[${new Date()}] ${client.user.tag} using ${pkg.name} v${
       pkg.version
     } ready!`
   );
   logger(
-    `Current safe URLs list: `,
-    dbops.safeurls.map((e) => "- " + e).join("/n")
+    `Current safe URLs list: \n${safeurls.map((e) => "- " + e).join("\n")}`
   );
 });
 
@@ -94,6 +94,18 @@ function cmdHandler(message) {
         return;
       }
       db.push("safeurls", url);
+      message.reply(`Added ${url} to the exception list!`);
+      logger(
+        `[${new Date()}] ${
+          message.author.tag
+        } added ${url} to the safe URL list!`
+      );
+      logger(
+        `[${new Date()}] Current safe URLs list: \n${db
+          .get("safeurls")
+          .map((e) => "- " + e)
+          .join("\n")}`
+      );
       break;
     case "remove":
       if (args.length < 2) {
@@ -109,14 +121,45 @@ function cmdHandler(message) {
         message.reply("You need to specify a valid URL!");
         return;
       }
-      if (!dbops.safeurls.includes(remUrl)) {
+      if (!dbops.safeurls().includes(remUrl)) {
         message.reply("That URL is not in the exception list!");
         return;
       }
       db.set(
         "safeurls",
-        dbops.safeurls.filter((u) => u != remUrl)
+        dbops.safeurls().filter((u) => u != remUrl)
       );
+      message.reply(`Removed ${remUrl} from the exception list!`);
+      logger(
+        `[${new Date()}] ${
+          message.author.tag
+        } removed ${remUrl} from the exception list!`
+      );
+      logger(
+        `[${new Date()}] Current safe URLs list: \n${db
+          .get("safeurls")
+          .map((e) => "- " + e)
+          .join("\n")}`
+      );
+      break;
+    case "list":
+      let embed = new Discord.MessageEmbed()
+        .setTitle("Safe URLs")
+        .setDescription(
+          `${dbops
+            .safeurls()
+            .map((e) => "- " + e)
+            .join("\n")}`
+        )
+        .setColor("#c0ffee")
+        .setFooter({
+          text: `kekbot`,
+          iconUrl: client.user.avatarURL(),
+        });
+      message.reply({
+        embeds: [embed],
+        allowedMentions: { repliedUser: false },
+      });
       break;
     default:
       message.reply("Invalid subcommand!");
@@ -128,7 +171,8 @@ client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
   if (message.content.toLowerCase().startsWith("kek!filter"))
     cmdHandler(message);
-  if (message.member.roles.cache.find((r) => r.name.toLowerCase() == "staff")) return;
+  if (message.member.roles.cache.find((r) => r.name.toLowerCase() == "staff"))
+    return;
 
   let splitMessage = message.content
       .split(/ +/g)
@@ -157,7 +201,7 @@ client.on("messageCreate", async (message) => {
         );
       } finally {
         clean = clean.toLowerCase();
-        if (dbops.safeurls.includes(clean)) return "";
+        if (dbops.safeurls().includes(clean)) return "";
 
         return clean;
       }
@@ -165,19 +209,19 @@ client.on("messageCreate", async (message) => {
     .forEach((word) => {
       if (dbops.getDomainList().includes(word)) detected.push(word);
       // Use levenshtein distance to detect similar domains
-      if (
+      else if (
         dbops
           .getDomainList()
-          .filter((domain) => levenshtein.get(word, domain) < 2, {
+          .filter((domain) => levenshtein.get(word, domain) < 3, {
             useCollator: true,
           }).length > 0
       )
         detected.push(word);
-      if (dbops.getHashList().includes(hashUtil.hash(word)))
+      else if (dbops.getHashList().includes(hashUtil.hash(word)))
         detected.push(word);
-      if (stopPhishingList.includes(word)) detected.push(word);
-      if (
-        stopPhishingList.filter((domain) => levenshtein.get(word, domain) < 2, {
+      else if (stopPhishingList.includes(word)) detected.push(word);
+      else if (
+        stopPhishingList.filter((domain) => levenshtein.get(word, domain) < 3, {
           useCollator: true,
         }).length > 0
       )
@@ -196,16 +240,59 @@ client.on("messageCreate", async (message) => {
   logger(`[${new Date()}] Deleted the message from ${message.author.tag}`);
 
   if (reportedList.filter((r) => r == message.author.id).length > 2) {
+    if (reportedList.filter((r) => r == message.author.id).length == 5) {
+      logger(
+        `[${new Date()}] ${
+          message.author.tag
+        } has triggered the report limit, timing out the user for 10 hours...`
+      );
+      await message.member.timeout(10 * 60 * 60 * 1000);
+      let embed = new Discord.MessageEmbed()
+        .setTitle("You have been timed out!")
+        .setDescription(
+          `You have been timed out for triggering our phishing detection system too many times.\nIf you believe this is a mistake, please contact a staff member.`
+        )
+        .setColor("#c0ffee")
+        .setAuthor({
+          name: "kekbot",
+          iconURL: client.user.avatarURL(),
+        })
+        .setFooter({ text: `kekfilter` })
+        .setTimestamp();
+
+      await message.author.send({ embeds: [embed] });
+
+      // Report to the log channel
+      let embed2 = new Discord.MessageEmbed()
+        .setTitle("User timed out!")
+        .setDescription(
+          `${message.author.tag} has been timed out for triggering our phishing detection system too many times.`
+        )
+        .setColor("#c0ffee")
+        .setAuthor({
+          name: "kekbot",
+          iconURL: client.user.avatarURL(),
+        })
+        .setFooter({ text: `kekfilter` })
+        .setTimestamp();
+
+      await logChannel.send({ embeds: [embed2] });
+    }
+
+    if (reportedList.filter((r) => r == message.author.id).length > 4) return;
+
     logger(
       `[${new Date()}] ${
         message.author.tag
       } has been reported too many times, sending a critical alert...`
     );
 
-    if (reportedList.filter((r) => r == message.author.id).length > 4) return;
-
     await logChannel.send(
-      `🔥 **<@${message.author.id}> has been sending suspicious links too many times, please investigate!** 🔥`
+      `🔥 **<@${
+        message.author.id
+      }> has been sending suspicious links too many times (${
+        reportedList.filter((r) => r == message.author.id).length
+      } to be exact), please investigate! 🔥**`
     );
 
     reportedList.push(message.author.id);
@@ -228,9 +315,18 @@ client.on("messageCreate", async (message) => {
       .setColor("#ff0000")
       .setTitle("⚠️ Phishing attempt detected!")
       .setDescription(
-        `**${message.author.tag}** has attempted to send a phishing message in **<#${message.channel.id}>**`
+        `**<@${message.author.id}>** has attempted to send a phishing message in **<#${message.channel.id}>**`
       )
       .addField("Detected Phishing Domain Hashes:", joined)
+      .setFooter({
+        text: `kekfilter`,
+        iconUrl: client.user.avatarURL(),
+      })
+      .setAuthor({
+        name: `Suspect: ${message.author.tag}`,
+        iconURL: message.author.avatarURL(),
+      })
+
       .setTimestamp();
 
   // Send embed

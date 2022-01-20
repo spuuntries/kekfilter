@@ -13,7 +13,7 @@
     "dotenv": "^14.2.0",
     "fast-levenshtein": "^3.0.0",
     "stop-discord-phishing": "^0.0.4",
-    "quick.db": "git+https://github.com/plexidev/quick.db.git",
+    "quick.db": "git+https://github.com/plexidev/quick.db.git#91ef921894767bd532a62a4a831db74f9d9d6f17",
     "url-unshort": "^5.0.0"
   }
 }

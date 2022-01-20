@@ -36,15 +36,26 @@ module.exports = function (dbpath = "./data/data.sqlite") {
       setTimeout(cacheList, 3600000);
     } catch (e) {
       console.log(e);
+      setTimeout(cacheList, 3600000);
     }
   }
 
   cacheList();
 
   // Check if safeurls are defined, if not set it to the safeurls array
-  if (!db.get("safeurls")) db.set("safeurls", safe);
-
-  module.safeurls = db.get("safeurls");
+  let safeurls;
+  function getSafeUrls() {
+    safeurls = db.get("safeurls");
+  
+    if (!safeurls) {
+      safeurls = safe;
+      db.set("safeurls", safe);
+    }
+    
+    return safeurls;
+  }
+  
+  module.safeurls = getSafeUrls;
 
   /**
    * Get current cache of phishing domains list

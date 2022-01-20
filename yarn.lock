@@ -775,9 +775,9 @@ punycode@^2.0.1:
   resolved "https://registry.yarnpkg.com/punycode/-/punycode-2.1.1.tgz#b58b010ac40c22c5657616c8d2c2c02c7bf479ec"
   integrity sha512-XRsRjdf+j5ml+y/6GKHPZbrF/8p2Yga0JPtdqTIY2Xe5ohJPD9saDJJLPvp9+NSBprVvevdXZybnj2cv8OEd0A==
 
-"quick.db@git+https://github.com/plexidev/quick.db.git":
+"quick.db@git+https://github.com/plexidev/quick.db.git#91ef921894767bd532a62a4a831db74f9d9d6f17":
   version "8.0.0"
-  resolved "git+https://github.com/plexidev/quick.db.git#4b31d882b434516dc416658256901cd7abcbb96f"
+  resolved "git+https://github.com/plexidev/quick.db.git#91ef921894767bd532a62a4a831db74f9d9d6f17"
   dependencies:
     better-sqlite3 "^7.1.1"
     lodash "^4.17.20"
