@@ -56,8 +56,7 @@ function cmdHandler(message) {
 
   // Check if author has staff role
   if (
-    !message.author.member.roles.filter((r) => r.name.toLowerCase() == "staff")
-      .length > 0
+    !message.member.roles.cache.find((r) => r.name.toLowerCase() == "staff")
   ) {
     message.reply(
       "You do not have the required permissions to use this command."
@@ -66,7 +65,7 @@ function cmdHandler(message) {
   }
 
   // Get args
-  let args = message.content.slice("kek!filter".length).trim().split(/ +/g),
+  let args = message.content.trim().split(/ +/g),
     commandAndPrefix = args.shift().toLowerCase();
 
   // Check if number of args is correct
@@ -129,6 +128,7 @@ client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
   if (message.content.toLowerCase().startsWith("kek!filter"))
     cmdHandler(message);
+  if (message.member.roles.cache.find((r) => r.name.toLowerCase() == "staff")) return;
 
   let splitMessage = message.content
       .split(/ +/g)
