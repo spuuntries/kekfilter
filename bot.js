@@ -212,7 +212,7 @@ client.on("messageCreate", async (message) => {
       else if (
         dbops
           .getDomainList()
-          .filter((domain) => levenshtein.get(word, domain) < 3, {
+          .filter((domain) => levenshtein.get(word, domain) < 4, {
             useCollator: true,
           }).length > 0
       )
@@ -221,7 +221,7 @@ client.on("messageCreate", async (message) => {
         detected.push(word);
       else if (stopPhishingList.includes(word)) detected.push(word);
       else if (
-        stopPhishingList.filter((domain) => levenshtein.get(word, domain) < 3, {
+        stopPhishingList.filter((domain) => levenshtein.get(word, domain) < 4, {
           useCollator: true,
         }).length > 0
       )
@@ -240,7 +240,13 @@ client.on("messageCreate", async (message) => {
   logger(`[${new Date()}] Deleted the message from ${message.author.tag}`);
 
   if (reportedList.filter((r) => r == message.author.id).length > 2) {
-    if (reportedList.filter((r) => r == message.author.id).length == 5) {
+    if (reportedList.filter((r) => r == message.author.id).length >= 5) {
+      // Check if user is bannable
+      if (!message.member.bannable) {
+	logger(`[${new Date()}] ${message.author.tag} is not bannable, therefore not timeout-able, skipping...`);
+	return;
+      }
+
       logger(
         `[${new Date()}] ${
           message.author.tag
