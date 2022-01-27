@@ -243,25 +243,33 @@ client.on("messageCreate", async (message) => {
     if (reportedList.filter((r) => r == message.author.id).length >= 5) {
       // Check if user is bannable
       if (!message.member.bannable) {
-	logger(`[${new Date()}] ${message.author.tag} is not bannable, therefore not timeout-able, skipping...`);
-	return;
+        logger(
+          `[${new Date()}] ${
+            message.author.tag
+          } is not bannable, therefore not timeout-able, skipping...`
+        );
+        return;
       }
 
-      logger(
-        `[${new Date()}] ${
-          message.author.tag
-        } has triggered the report limit, timing out the user for 10 hours...`
-      );
-      await message.member.timeout(10 * 60 * 60 * 1000);
+      // Timeout the user for 10 minutes in ms multiplied by the number of times they've triggered the system.
+      let time =
+        10 *
+        60 *
+        1000 *
+        reportedList.filter((r) => r == message.author.id).length;
+      logger(`[${new Date()}] Timing out ${message.author.tag} for ${time}ms`);
+      await message.member.timeout(time);
       let embed = new Discord.MessageEmbed()
-        .setTitle("You have been timed out!")
+        .setTitle("⚠️ You have been timed out!")
         .setDescription(
-          `You have been timed out for triggering our phishing detection system too many times.\nIf you believe this is a mistake, please contact a staff member.`
+          `You have been timed out for ${
+            10 * reportedList.filter((r) => r == message.author.id).length
+          } minutes for triggering our phishing detection system too many times.\n\nIf you believe this is a mistake, please contact a staff member.`
         )
         .setColor("#c0ffee")
         .setAuthor({
-          name: "kekbot",
-          iconURL: client.user.avatarURL(),
+          name: "Scam URL detected! 🔒",
+          iconURL: client.user.displayAvatarURL(),
         })
         .setFooter({ text: `kekfilter` })
         .setTimestamp();
@@ -270,14 +278,16 @@ client.on("messageCreate", async (message) => {
 
       // Report to the log channel
       let embed2 = new Discord.MessageEmbed()
-        .setTitle("User timed out!")
+        .setTitle("🛡️ User timed out!")
         .setDescription(
-          `${message.author.tag} has been timed out for triggering our phishing detection system too many times.`
+          `${message.author.tag} has been timed out for ${
+            10 * reportedList.filter((r) => r == message.author.id).length
+          } minutes for triggering our phishing detection system too many times.`
         )
         .setColor("#c0ffee")
         .setAuthor({
-          name: "kekbot",
-          iconURL: client.user.avatarURL(),
+          name: "Scam URL detected! 🔒",
+          iconURL: client.user.displayAvatarURL(),
         })
         .setFooter({ text: `kekfilter` })
         .setTimestamp();
