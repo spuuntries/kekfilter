@@ -32,7 +32,14 @@ you need to first copy the `.env copy` file
 into a `.env`.
 
 Then, you need to fill in the `.env` with your bot's
-token and an id of the channel for the bot to log to.
+token and an id of the channel for the bot to log to.  
+
+The `ISPBULLSHIT` can be removed if your ISP doesn't 
+have a fallback page for "DNS record not found" type of
+errors.
+
+Afterwards, you can run it like any other node.js project.  
+e.g. `node .`  
 
 ## 📜 How to use
 For staff exists 3 commands to modify the behaviour
