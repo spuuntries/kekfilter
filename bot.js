@@ -154,7 +154,7 @@ function cmdHandler(message) {
         .setColor("#c0ffee")
         .setFooter({
           text: `kekfilter`,
-          iconURL: logChannel.guild.iconURL(),
+          iconURL: message.guild.iconURL(),
         });
       message.reply({
         embeds: [embed],
