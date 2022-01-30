@@ -25,7 +25,7 @@ function login() {
 login();
 
 client.on("ready", () => {
-  let safeurls = dbops.db.get("safeurls");
+  let safeurls = dbops.safeurls();
   logger(
     `[${new Date()}] ${client.user.tag} using ${pkg.name} v${
       pkg.version
@@ -153,9 +153,9 @@ function cmdHandler(message) {
         )
         .setColor("#c0ffee")
         .setFooter({
-          text: `kekbot`,
-          iconUrl: client.user.avatarURL(),
-        });
+          text: `kekfilter`,
+          iconURL: logChannel.guild.iconURL(),
+        })
       message.reply({
         embeds: [embed],
         allowedMentions: { repliedUser: false },
@@ -168,10 +168,10 @@ function cmdHandler(message) {
           `\n**kek!filter allow** \`<url>\` - Adds a URL to the exception list.\n**kek!filter remove** \`<url>\` - Removes a URL from the exception list.\n**kek!filter list** - Lists all URLs in the exception list.\n**kek!filter help** - Displays this help message.`
         )
         .setColor("#208075")
-        .setFooter({
-          text: `kekbot`,
-          iconUrl: client.user.avatarURL(),
-        });
+       .setFooter({
+          text: `kekfilter`,
+          iconURL: logChannel.guild.iconURL(),
+        })
       message.reply({
         embeds: [embed2],
         allowedMentions: { repliedUser: false },
@@ -255,6 +255,8 @@ client.on("messageCreate", async (message) => {
   await message.delete();
   logger(`[${new Date()}] Deleted the message from ${message.author.tag}`);
 
+  reportedList.push(message.author.id);
+
   if (reportedList.filter((r) => r == message.author.id).length > 2) {
     if (reportedList.filter((r) => r == message.author.id).length >= 5) {
       // Check if user is bannable
@@ -290,7 +292,7 @@ client.on("messageCreate", async (message) => {
           iconURL: message.author.avatarURL(),
         })
         .setFooter({
-          text: `If you believe this is a mistake, please contact a staff member at ${logChannel.guild.name}!`,
+          text: `If you believe this is a mistake,\nplease contact a staff member at ${logChannel.guild.name}!`,
           iconURL: logChannel.guild.iconURL(),
         })
         .setTimestamp();
@@ -331,17 +333,10 @@ client.on("messageCreate", async (message) => {
         reportedList.filter((r) => r == message.author.id).length
       } to be exact), please investigate! 🔥**`
     );
-
-    reportedList.push(message.author.id);
     return;
   }
 
-  if (reportedList.includes(message.author.id)) {
-    reportedList.push(message.author.id);
-    return;
-  }
-
-  if (!logChannel) return;
+  if (!logChannel || reportedList.filter((r) => r == message.author.id).length > 1) return;
 
   // Create embed
   let joined = detected
@@ -357,7 +352,7 @@ client.on("messageCreate", async (message) => {
       .addField("Detected Phishing Domain Hashes:", joined)
       .setFooter({
         text: `kekfilter`,
-        iconUrl: logChannel.guild.iconURL(),
+        iconURL: logChannel.guild.iconURL(),
       })
       .setAuthor({
         name: `Suspect: ${message.author.tag}`,
@@ -375,7 +370,4 @@ client.on("messageCreate", async (message) => {
   }
 
   logger(`[${new Date()}] Sent embed for ${message.author.tag}`);
-
-  // Add to reported list
-  reportedList.push(message.author.id);
 });
