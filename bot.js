@@ -161,6 +161,22 @@ function cmdHandler(message) {
         allowedMentions: { repliedUser: false },
       });
       break;
+    case "help":
+      let embed2 = new Discord.MessageEmbed()
+        .setTitle("🤔 Filter Help 💡")
+        .setDescription(
+          `\n**kek!filter allow** \`<url>\` - Adds a URL to the exception list.\n**kek!filter remove** \`<url>\` - Removes a URL from the exception list.\n**kek!filter list** - Lists all URLs in the exception list.\n**kek!filter help** - Displays this help message.`
+        )
+        .setColor("#208075")
+        .setFooter({
+          text: `kekbot`,
+          iconUrl: client.user.avatarURL(),
+        });
+      message.reply({
+        embeds: [embed2],
+        allowedMentions: { repliedUser: false },
+      });
+      break;
     default:
       message.reply("Invalid subcommand!");
       return;
@@ -251,27 +267,32 @@ client.on("messageCreate", async (message) => {
         return;
       }
 
-      // Timeout the user for 10 minutes in ms multiplied by the number of times they've triggered the system.
+      // Timeout the user for the number of times they've triggered the system
+      // minus 4 to account for headstart then multiplied
+      // by 10 minutes in ms.
       let time =
         10 *
         60 *
         1000 *
-        reportedList.filter((r) => r == message.author.id).length;
+        (reportedList.filter((r) => r == message.author.id).length - 4);
       logger(`[${new Date()}] Timing out ${message.author.tag} for ${time}ms`);
       await message.member.timeout(time);
       let embed = new Discord.MessageEmbed()
         .setTitle("⚠️ You have been timed out!")
         .setDescription(
           `You have been timed out for ${
-            10 * reportedList.filter((r) => r == message.author.id).length
-          } minutes for triggering our phishing detection system too many times.\n\nIf you believe this is a mistake, please contact a staff member.`
+            10 * (reportedList.filter((r) => r == message.author.id).length - 4)
+          } minutes for triggering our phishing detection system too many times.`
         )
         .setColor("#c0ffee")
         .setAuthor({
-          name: "Scam URL detected! 🔒",
-          iconURL: client.user.displayAvatarURL(),
+          name: `Suspect: ${message.author.tag}`,
+          iconURL: message.author.avatarURL(),
         })
-        .setFooter({ text: `kekfilter` })
+        .setFooter({
+          text: `If you believe this is a mistake, please contact a staff member at ${logChannel.guild.name}!`,
+          iconURL: logChannel.guild.iconURL(),
+        })
         .setTimestamp();
 
       await message.author.send({ embeds: [embed] });
@@ -280,22 +301,22 @@ client.on("messageCreate", async (message) => {
       let embed2 = new Discord.MessageEmbed()
         .setTitle("🛡️ User timed out!")
         .setDescription(
-          `${message.author.tag} has been timed out for ${
-            10 * reportedList.filter((r) => r == message.author.id).length
+          `<@${message.author.id}> has been timed out for ${
+            10 * (reportedList.filter((r) => r == message.author.id).length - 4)
           } minutes for triggering our phishing detection system too many times.`
         )
         .setColor("#c0ffee")
         .setAuthor({
-          name: "Scam URL detected! 🔒",
-          iconURL: client.user.displayAvatarURL(),
+          name: `Suspect: ${message.author.tag}`,
+          iconURL: message.author.avatarURL(),
         })
-        .setFooter({ text: `kekfilter` })
+        .setFooter({ text: `kekfilter`, iconURL: logChannel.guild.iconURL() })
         .setTimestamp();
 
       await logChannel.send({ embeds: [embed2] });
     }
 
-    if (reportedList.filter((r) => r == message.author.id).length > 4) return;
+    if (reportedList.filter((r) => r == message.author.id).length > 3) return;
 
     logger(
       `[${new Date()}] ${
@@ -331,12 +352,12 @@ client.on("messageCreate", async (message) => {
       .setColor("#ff0000")
       .setTitle("⚠️ Phishing attempt detected!")
       .setDescription(
-        `**<@${message.author.id}>** has attempted to send a phishing message in **<#${message.channel.id}>**`
+        `\n<@${message.author.id}> has attempted to send a phishing message in **<#${message.channel.id}>**`
       )
       .addField("Detected Phishing Domain Hashes:", joined)
       .setFooter({
         text: `kekfilter`,
-        iconUrl: client.user.avatarURL(),
+        iconUrl: logChannel.guild.iconURL(),
       })
       .setAuthor({
         name: `Suspect: ${message.author.tag}`,
