@@ -155,7 +155,7 @@ function cmdHandler(message) {
         .setFooter({
           text: `kekfilter`,
           iconURL: logChannel.guild.iconURL(),
-        })
+        });
       message.reply({
         embeds: [embed],
         allowedMentions: { repliedUser: false },
@@ -168,10 +168,10 @@ function cmdHandler(message) {
           `\n**kek!filter allow** \`<url>\` - Adds a URL to the exception list.\n**kek!filter remove** \`<url>\` - Removes a URL from the exception list.\n**kek!filter list** - Lists all URLs in the exception list.\n**kek!filter help** - Displays this help message.`
         )
         .setColor("#208075")
-       .setFooter({
+        .setFooter({
           text: `kekfilter`,
-          iconURL: logChannel.guild.iconURL(),
-        })
+          iconURL: message.guild.iconURL(),
+        });
       message.reply({
         embeds: [embed2],
         allowedMentions: { repliedUser: false },
@@ -297,7 +297,15 @@ client.on("messageCreate", async (message) => {
         })
         .setTimestamp();
 
-      await message.author.send({ embeds: [embed] });
+      try {
+        await message.author.send({ embeds: [embed] });
+      } catch (error) {
+        logger(
+          `[${new Date()}] Error sending message to ${
+            message.author.tag
+          }\nErr: ${error}`
+        );
+      }
 
       // Report to the log channel
       let embed2 = new Discord.MessageEmbed()
@@ -336,7 +344,11 @@ client.on("messageCreate", async (message) => {
     return;
   }
 
-  if (!logChannel || reportedList.filter((r) => r == message.author.id).length > 1) return;
+  if (
+    !logChannel ||
+    reportedList.filter((r) => r == message.author.id).length > 1
+  )
+    return;
 
   // Create embed
   let joined = detected
