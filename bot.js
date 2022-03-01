@@ -142,6 +142,84 @@ function cmdHandler(message) {
           .join("\n")}`
       );
       break;
+    case "clean":
+      if (message.mentions.users.size < 1) {
+        message.reply("You need to mention a user to clean records from!");
+        return;
+      }
+
+      let user = message.mentions.users.first(),
+        amount = args[2] || 1;
+
+      if (user.bot) {
+        message.reply("You can't clean records from bots!");
+        return;
+      }
+
+      if (!parseInt(amount)) {
+        message.reply("You need to specify a valid number!");
+        return;
+      }
+
+      // Check if user is in the reported list
+      if (!reportedList.includes(user.id)) {
+        message.reply("That user is not in the reported list!");
+        return;
+      }
+
+      // Clean records from user up to the specified amount
+      reportedList = reportedList.filter((u, i) => {
+        if (u == user.id) {
+          if (i < amount) {
+            return false;
+          } else {
+            return true;
+          }
+        } else {
+          return true;
+        }
+      });
+
+      message.reply(
+        `Cleaned ${amount} records from ${user.tag}'s report list!`
+      );
+      logger(
+        `[${new Date()}] ${message.author.tag} cleaned ${amount} records from ${
+          user.tag
+        }'s report list!`
+      );
+      break;
+    case "info":
+      if (message.mentions.users.size < 1) {
+        message.reply("You need to mention a user to get info from!");
+        return;
+      }
+
+      let user2 = message.mentions.users.first();
+
+      if (user2.bot) {
+        message.reply("You can't get info from bots!");
+        return;
+      }
+
+      // Check if user is in the reported list
+      if (!reportedList.includes(user2.id)) {
+        message.reply("That user is not in the reported list!");
+        return;
+      }
+
+      // Get user's records
+      let records = reportedList.filter((u) => u == user2.id);
+
+      message.reply(
+        `${user2.tag} has ${records.length} warns in the warns list!`
+      );
+      logger(
+        `[${new Date()}] ${message.author.tag} got info on ${
+          user2.tag
+        }'s warns list!`
+      );
+      break;
     case "list":
       let embed = new Discord.MessageEmbed()
         .setTitle("Safe URLs")
@@ -163,13 +241,34 @@ function cmdHandler(message) {
       break;
     case "help":
       let embed2 = new Discord.MessageEmbed()
-        .setTitle("🤔 Filter Help 💡")
+        .setTitle("⚔️ Kekfilter ⚔️")
         .setDescription(
-          `\n**kek!filter allow** \`<url>\` - Adds a URL to the exception list.\n**kek!filter remove** \`<url>\` - Removes a URL from the exception list.\n**kek!filter list** - Lists all URLs in the exception list.\n**kek!filter help** - Displays this help message.`
+          `
+[Kekfilter](https://github.com/spuuntries/kekfilter) is a bot that filters out messages containing unsafe links,
+it only has a few commands, all of which are staff only:
+
+**kek!filter allow** \`<url>\` - Adds a URL to the exception list.
+**kek!filter remove** \`<url>\` - Removes a URL from the exception list.
+**kek!filter list** - Lists all URLs in the exception list.
+**kek!filter clean** \`<user>\` \`<amount>\` - Cleans records from a user's warns list.
+**kek!filter info** \`<user>\` - Displays the warns list of a user.
+**kek!filter help** - Displays this help message.`
         )
+        .addField(
+          "\u200b",
+          `
+📝 Notes:
+- Make sure that the URL you're adding to the exception list is a **valid URL**! (i.e. \`https://google.com\`, with the \`https://\` part included)
+- **All the user mentions must be valid** user mentions! (e.g. \`<@userID>\`)
+- **The clean amount is optional**, but if you want to clean more than 1 record, you need to specify the amount!`
+        )
+        .setAuthor({
+          name: "kekfilter - Help",
+          iconURL: message.guild.iconURL(),
+        })
         .setColor("#208075")
         .setFooter({
-          text: `kekfilter`,
+          text: `Catching scammers, one kek at a time!`,
           iconURL: message.guild.iconURL(),
         });
       message.reply({

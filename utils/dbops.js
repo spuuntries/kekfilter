@@ -22,14 +22,17 @@ module.exports = function (dbpath = "./data/data.sqlite") {
         )
         .then((res) => {
           if (!res.status == 200 || !typeof res.data == "string") return;
-          let filteredList = res.data.split("\n").filter((e) => e.length > 80);
+          let filteredList = res.data
+            .split("\n")
+            .filter((e) => e.length > 80)
+            .map((e) => e.split(/ +/g)[1].replace("\r", ""));
           db.set("domainList", filteredList);
         });
 
       axios
         .get("https://cdn.discordapp.com/bad-domains/hashes.json")
         .then((res) => {
-          if (!res.status == 200 || !typeof res.data == "object") return;
+          if (!res.status == 200 || !Array.isArray(res.data)) return;
           db.set("hashList", res.data);
         });
 
@@ -46,15 +49,15 @@ module.exports = function (dbpath = "./data/data.sqlite") {
   let safeurls;
   function getSafeUrls() {
     safeurls = db.get("safeurls");
-  
+
     if (!safeurls) {
       safeurls = safe;
       db.set("safeurls", safe);
     }
-    
+
     return safeurls;
   }
-  
+
   module.safeurls = getSafeUrls;
 
   /**
