@@ -16,7 +16,7 @@ scam URL public lists and comparing URLs within a
 message to them.
 
 > Note that it might only target URLs used for Discord scams due to this,  
-> see `utils/dbops.js` for the current lists we're fetching from.
+> see `utils/dbops.js (Ln 17, Col 3)` and `bot.js (Ln 9, Col 3)` for the current lists we're fetching from, add to the function in `dbops.js` if you'd like to add more lists.
 
 To deal with the whole "Kill one, 20 bajillion more pop up" problem,
 it checks the levenshtein distance between suspect and target domains
@@ -71,7 +71,18 @@ This removes the url from the Safe URLs list.
 
 List the current list of Safe URLs.
 
-4. `help`
+4. `clean`
+   > e.g. `kek!filter clean <user> <amount>`
+
+This will clean one or `amount` of the user's records in the database. Has to be a valid user mention.
+
+5. `info`
+
+   > e.g. `kek!filter info <user>`
+
+This will show the user's current record count. Has to be a valid user mention.
+
+6. `help`
    > e.g. `kek!filter help`
 
 Send the help message.

@@ -36,7 +36,14 @@ client.on("ready", () => {
   );
 });
 
-var reportedList = [];
+var reportedList = () => {
+  let list = db.get("reportedList");
+  if (!list) {
+    list = [];
+    db.set("reportedList", list);
+  }
+  return list;
+};
 
 /**
  * Command handler
@@ -72,7 +79,7 @@ function cmdHandler(message) {
   if (args.length < 1) {
     message.reply("You need to specify a subcommand!");
     return;
-  } else if (args.length > 2) {
+  } else if ((args[0] != "clean" && args.length > 2) || args.length > 3) {
     message.reply("Too many arguments!");
     return;
   }
@@ -162,23 +169,26 @@ function cmdHandler(message) {
       }
 
       // Check if user is in the reported list
-      if (!reportedList.includes(user.id)) {
+      if (!reportedList().includes(user.id)) {
         message.reply("That user is not in the reported list!");
         return;
       }
 
       // Clean records from user up to the specified amount
-      reportedList = reportedList.filter((u, i) => {
-        if (u == user.id) {
-          if (i < amount) {
-            return false;
+      db.set(
+        "reportedList",
+        reportedList().filter((u, i) => {
+          if (u == user.id) {
+            if (i < amount) {
+              return false;
+            } else {
+              return true;
+            }
           } else {
             return true;
           }
-        } else {
-          return true;
-        }
-      });
+        })
+      );
 
       message.reply(
         `Cleaned ${amount} records from ${user.tag}'s report list!`
@@ -203,13 +213,13 @@ function cmdHandler(message) {
       }
 
       // Check if user is in the reported list
-      if (!reportedList.includes(user2.id)) {
+      if (!reportedList().includes(user2.id)) {
         message.reply("That user is not in the reported list!");
         return;
       }
 
       // Get user's records
-      let records = reportedList.filter((u) => u == user2.id);
+      let records = reportedList().filter((u) => u == user2.id);
 
       message.reply(
         `${user2.tag} has ${records.length} warns in the warns list!`
@@ -354,10 +364,10 @@ client.on("messageCreate", async (message) => {
   await message.delete();
   logger(`[${new Date()}] Deleted the message from ${message.author.tag}`);
 
-  reportedList.push(message.author.id);
+  db.set("reportedList", [...reportedList(), message.author.id]);
 
-  if (reportedList.filter((r) => r == message.author.id).length > 2) {
-    if (reportedList.filter((r) => r == message.author.id).length >= 5) {
+  if (reportedList().filter((r) => r == message.author.id).length > 2) {
+    if (reportedList().filter((r) => r == message.author.id).length >= 5) {
       // Check if user is bannable
       if (!message.member.bannable) {
         logger(
@@ -375,14 +385,15 @@ client.on("messageCreate", async (message) => {
         10 *
         60 *
         1000 *
-        (reportedList.filter((r) => r == message.author.id).length - 4);
+        (reportedList().filter((r) => r == message.author.id).length - 4);
       logger(`[${new Date()}] Timing out ${message.author.tag} for ${time}ms`);
       await message.member.timeout(time);
       let embed = new Discord.MessageEmbed()
         .setTitle("⚠️ You have been timed out!")
         .setDescription(
           `You have been timed out for ${
-            10 * (reportedList.filter((r) => r == message.author.id).length - 4)
+            10 *
+            (reportedList().filter((r) => r == message.author.id).length - 4)
           } minutes for triggering our phishing detection system too many times.`
         )
         .setColor("#c0ffee")
@@ -411,7 +422,8 @@ client.on("messageCreate", async (message) => {
         .setTitle("🛡️ User timed out!")
         .setDescription(
           `<@${message.author.id}> has been timed out for ${
-            10 * (reportedList.filter((r) => r == message.author.id).length - 4)
+            10 *
+            (reportedList().filter((r) => r == message.author.id).length - 4)
           } minutes for triggering our phishing detection system too many times.`
         )
         .setColor("#c0ffee")
@@ -425,7 +437,7 @@ client.on("messageCreate", async (message) => {
       await logChannel.send({ embeds: [embed2] });
     }
 
-    if (reportedList.filter((r) => r == message.author.id).length > 3) return;
+    if (reportedList().filter((r) => r == message.author.id).length > 3) return;
 
     logger(
       `[${new Date()}] ${
@@ -437,7 +449,7 @@ client.on("messageCreate", async (message) => {
       `🔥 **<@${
         message.author.id
       }> has been sending suspicious links too many times (${
-        reportedList.filter((r) => r == message.author.id).length
+        reportedList().filter((r) => r == message.author.id).length
       } to be exact), please investigate! 🔥**`
     );
     return;
@@ -445,7 +457,7 @@ client.on("messageCreate", async (message) => {
 
   if (
     !logChannel ||
-    reportedList.filter((r) => r == message.author.id).length > 1
+    reportedList().filter((r) => r == message.author.id).length > 1
   )
     return;
 
