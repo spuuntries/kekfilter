@@ -10,6 +10,7 @@
   "dependencies": {
     "axios": "^0.25.0",
     "discord.js": "^13.6.0",
+    "discordjs-button-embed-pagination": "^4.0.2",
     "dotenv": "^14.2.0",
     "fast-levenshtein": "^3.0.0",
     "quick.db": "git+https://github.com/plexidev/quick.db.git#91ef921894767bd532a62a4a831db74f9d9d6f17",

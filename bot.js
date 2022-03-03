@@ -7,6 +7,7 @@ const Discord = require("discord.js"),
   pkg = require("./package.json"),
   logger = require("./utils/logger.js"),
   phishing = require("stop-discord-phishing"),
+  { Pagination } = require("discordjs-button-embed-pagination"),
   dbops = require("./utils/dbops.js")("./data/data.sqlite"),
   db = dbops.db,
   { URL } = require("url"),
@@ -22,7 +23,30 @@ function login() {
     }, 5000);
   });
 }
+
 login();
+
+/**
+ * @param {Discord.GuildMember} user - The user to check.
+ * @returns {boolean} - Whether the user is a staff member or not.
+ */
+function isStaff(user) {
+  return (
+    user.roles.cache.filter((r) =>
+      r.name.toLowerCase().includes(process.env.STAFFROLE)
+    ).size > 0 ||
+    user.roles.cache.filter((r) => r.id == process.env.STAFFROLE).size > 0
+  );
+}
+
+// https://stackoverflow.com/a/15604206
+function replaceAll(str, mapObj) {
+  var re = new RegExp(Object.keys(mapObj).join("|"), "gi");
+
+  return str.replace(re, function (matched) {
+    return mapObj[matched.toLowerCase()];
+  });
+}
 
 client.on("ready", () => {
   let safeurls = dbops.safeurls();
@@ -32,7 +56,11 @@ client.on("ready", () => {
     } ready!`
   );
   logger(
-    `Current safe URLs list: \n${safeurls.map((e) => "- " + e).join("\n")}`
+    `Current safe URLs list: \n[${
+      safeurls.length > 5
+        ? safeurls.slice(0, 4).join(", ") + ", ..."
+        : safeurls.join(", ")
+    }]`
   );
 });
 
@@ -57,14 +85,14 @@ function cmdHandler(message) {
   if (
     message.author.bot ||
     message.channel.type === "dm" ||
-    !message.content.toLowerCase().startsWith("kek!filter")
+    !message.content
+      .toLowerCase()
+      .startsWith(process.env.PREFIX.toLowerCase() + "filter")
   )
     return;
 
   // Check if author has staff role
-  if (
-    !message.member.roles.cache.find((r) => r.name.toLowerCase() == "staff")
-  ) {
+  if (!isStaff(message.member)) {
     message.reply(
       "You do not have the required permissions to use this command."
     );
@@ -222,7 +250,7 @@ function cmdHandler(message) {
       let records = reportedList().filter((u) => u == user2.id);
 
       message.reply(
-        `${user2.tag} has ${records.length} warns in the warns list!`
+        `${user2.tag} has ${records.length} warns in the reports list!`
       );
       logger(
         `[${new Date()}] ${message.author.tag} got info on ${
@@ -231,23 +259,25 @@ function cmdHandler(message) {
       );
       break;
     case "list":
-      let embed = new Discord.MessageEmbed()
-        .setTitle("Safe URLs")
-        .setDescription(
-          `${dbops
-            .safeurls()
-            .map((e) => "- " + e)
-            .join("\n")}`
-        )
-        .setColor("#c0ffee")
-        .setFooter({
-          text: `kekfilter`,
-          iconURL: message.guild.iconURL(),
-        });
-      message.reply({
-        embeds: [embed],
-        allowedMentions: { repliedUser: false },
-      });
+      // Split the safe urls list into chunks of 5
+      let splitList = [];
+      for (let i = 0; i < dbops.safeurls().length; i += 5) {
+        splitList.push(dbops.safeurls().slice(i, i + 5));
+      }
+      let embeds = [];
+      for (let i = 0; i < splitList.length; i++) {
+        embeds.push(
+          new Discord.MessageEmbed()
+            .setTitle("Safe URLs")
+            .setDescription(splitList[i].map((e) => "- " + e).join("\n"))
+            .setColor("#c0ffee")
+            .setFooter({
+              text: `kekfilter | Page ${i + 1}/${splitList.length}`,
+              iconURL: message.guild.iconURL(),
+            })
+        );
+      }
+      new Pagination(message.channel, embeds, "page").paginate();
       break;
     case "help":
       let embed2 = new Discord.MessageEmbed()
@@ -257,12 +287,12 @@ function cmdHandler(message) {
 [Kekfilter](https://github.com/spuuntries/kekfilter) is a bot that filters out messages containing unsafe links,
 it only has a few commands, all of which are staff only:
 
-**kek!filter allow** \`<url>\` - Adds a URL to the exception list.
-**kek!filter remove** \`<url>\` - Removes a URL from the exception list.
-**kek!filter list** - Lists all URLs in the exception list.
-**kek!filter clean** \`<user>\` \`<amount>\` - Cleans records from a user's warns list.
-**kek!filter info** \`<user>\` - Displays the warns list of a user.
-**kek!filter help** - Displays this help message.`
+**${process.env.PREFIX}filter allow** \`<url>\` - Adds a URL to the exception list.
+**${process.env.PREFIX}filter remove** \`<url>\` - Removes a URL from the exception list.
+**${process.env.PREFIX}filter list** - Lists all URLs in the exception list.
+**${process.env.PREFIX}filter clean** \`<user>\` \`<amount>\` - Cleans records from a user's warns list.
+**${process.env.PREFIX}filter info** \`<user>\` - Displays the warns list of a user.
+**${process.env.PREFIX}filter help** - Displays this help message.`
         )
         .addField(
           "\u200b",
@@ -294,10 +324,13 @@ it only has a few commands, all of which are staff only:
 
 client.on("messageCreate", async (message) => {
   if (message.author.bot) return;
-  if (message.content.toLowerCase().startsWith("kek!filter"))
+  if (
+    message.content
+      .toLowerCase()
+      .startsWith(process.env.PREFIX.toLowerCase() + "filter")
+  )
     cmdHandler(message);
-  if (message.member.roles.cache.find((r) => r.name.toLowerCase() == "staff"))
-    return;
+  if (isStaff(message.member)) return;
 
   let splitMessage = message.content
       .split(/ +/g)
@@ -470,7 +503,17 @@ client.on("messageCreate", async (message) => {
       .setColor("#ff0000")
       .setTitle("⚠️ Phishing attempt detected!")
       .setDescription(
-        `\n<@${message.author.id}> has attempted to send a phishing message in **<#${message.channel.id}>**`
+        `\n<@${
+          message.author.id
+        }> has attempted to send a phishing message in **<#${
+          message.channel.id
+        }>**
+**Message content (with URLs hashed):** 
+\`\`\`${replaceAll(
+          message.content,
+          Object.assign(...detected.map((k) => ({ [k]: hashUtil.hash(k) })))
+        )}
+\`\`\``
       )
       .addField("Detected Phishing Domain Hashes:", joined)
       .setFooter({
