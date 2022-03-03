@@ -17,11 +17,18 @@ module.exports = [
   "valvesoftware.com",
   // Discord URLs
   "discord.com",
+  "discord.co",
   "discordapp.com",
   "discord.gg",
   "discord.media",
   "discordapp.net",
   "discordstatus.com",
+  "discord.gift",
+  "discord.gifts",
+  "discord.app",
+  "dis.gd",
+  "discord.new",
+  "watchanimeattheoffice.com",
   // Google URLs
   "1e100.net",
   "channel.status.request.url",
