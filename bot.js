@@ -394,8 +394,12 @@ client.on("messageCreate", async (message) => {
     }`
   );
 
-  await message.delete();
-  logger(`[${new Date()}] Deleted the message from ${message.author.tag}`);
+  try {
+     if (!message.deleted) await message.delete();
+     logger(`[${new Date()}] Deleted the message from ${message.author.tag}`);
+  } catch (e) {
+     logger(`[${new Date()}] Error occurred while deleting message from ${message.author.tag}, ${e}`);
+  }
 
   db.set("reportedList", [...reportedList(), message.author.id]);
 
