@@ -203,11 +203,13 @@ function cmdHandler(message) {
       }
 
       // Clean records from user up to the specified amount
+      let ctR = 0;
       db.set(
         "reportedList",
-        reportedList().filter((u, i) => {
+        reportedList().filter((u) => {
           if (u == user.id) {
-            if (i < amount) {
+            ctR++
+            if (ctR <= amount) {
               return false;
             } else {
               return true;
