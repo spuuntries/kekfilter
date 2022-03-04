@@ -95,7 +95,8 @@ caveats to this system.
 First, as you know, we use levenshtein distance
 to determine similarities between domains to anticipate changes in URLs.
 
-Unfortunately, this does come at a cost, that being normal URLs _could_
+Unfortunately, this does come at a cost, that being normal URLs 
+(or normal words, if sufficiently similar to the domains) _could_
 (keyword "could", afaict is unlikely) get caught up in the crossfire,
 to anticipate for this, one may modify a list of "Safe" URLs,
 that the bot will ignore.
